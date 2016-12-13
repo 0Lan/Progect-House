@@ -1,0 +1,109 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Net;
+using System.Net.Sockets;
+
+namespace Server
+{
+    class Server
+    {
+        IPAddress IP;
+        IPEndPoint IPEnd; //Конечная точка
+        Socket SocketListener; //Сокет IP/TCP
+
+        Socket HomeClient; //Приложение-дом
+        public Server(string address, int port)
+        {
+            IP = IPAddress.Parse(address);
+            IPEnd = new IPEndPoint(IP, port);
+            SocketListener = new Socket(IP.AddressFamily, SocketType.Stream, ProtocolType.Tcp); // Назначение сокета конечной точке     
+        }
+        private void ConsoleSection(string message)
+        {
+            Console.BackgroundColor = ConsoleColor.White;
+            Console.ForegroundColor = ConsoleColor.Black;
+            Console.Write(message);
+            Console.ResetColor();
+            Console.WriteLine();
+        }
+        public void Launch()
+        {
+            try
+            {
+                ConsoleSection("///Start server///");
+                Console.WriteLine("\nServer IP: " + IP + "\n");
+                SocketListener.Bind(IPEnd);
+                SocketListener.Listen(2); // Max кол-во подключений
+
+                //Home-Client
+                Console.WriteLine("Wait Home-Client...");
+                HomeClient = SocketListener.Accept(); //Ожидание подключения Home-Client
+                Console.WriteLine("Home-Client: connected\n");
+
+
+
+                byte[] bytes = new byte[1024]; //Буфер для отправки/принятия данных
+                int requestCount = 1; //Счетчик запросов
+
+                while (true) //Получение/отправка запросов
+                {
+                    Console.WriteLine("Wait Phone request...\n");
+
+                    Socket PhoneClient; //Приложение-телефон
+                    PhoneClient = SocketListener.Accept(); //Ожидание подключения Phone-Client
+
+                    //Получения номера кнопки от Телефона
+                    PhoneClient.Receive(bytes);
+                    Console.WriteLine("Request: " + requestCount + "");
+                    ConsoleSection("Phone-Client request: Button " + BitConverter.ToInt32(bytes,0));
+                    //Отправка номера кнопки Дому
+                    HomeClient.Send(bytes);
+                    Console.WriteLine("Send number to Home-Client");
+
+                    //Получение статуса кнопки от Дома
+                    HomeClient.Receive(bytes);
+                    ConsoleSection("Home-Client answer: Button " + ((BitConverter.ToBoolean(bytes, 0)) ? "On" : "Off"));
+                    //Отправка статуса кнопки на Телефон
+                    PhoneClient.Send(bytes);
+                    Console.WriteLine("Send answer to Phone-Client\n");
+
+                    PhoneClient.Shutdown(SocketShutdown.Both);
+                    PhoneClient.Close();
+
+                    requestCount++;
+                }
+                HomeClient.Shutdown(SocketShutdown.Both);
+                HomeClient.Close();
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine("\n\n" + ex.Message);
+                Console.ReadKey();
+            }
+        }
+
+    }
+    class Program
+    {
+        static public string GetMyIp()
+        {
+            var host = Dns.GetHostEntry(Dns.GetHostName());
+            foreach (var ip in host.AddressList)
+            {
+                if (ip.AddressFamily == AddressFamily.InterNetwork)
+                {
+                    return ip.ToString();
+                }
+            }
+            return "192.168.1.2";
+        }
+        static void Main(string[] args)
+        {
+            Server server = new Server(GetMyIp(), 20705);
+            server.Launch();           
+        }
+    }
+}
