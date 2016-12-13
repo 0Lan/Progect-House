@@ -1,0 +1,428 @@
+using UnityEngine;
+using System.Collections;
+using UnityEngine.UI;
+using System.Net;
+using System.Net.Sockets;
+using System;
+
+public class Menu : MonoBehaviour
+{
+    #region parameters
+    [Header("Background")]
+    public int x;
+    public Texture2D background;
+    public Texture2D indiEnerge;
+    public Texture2D indiLighting;
+    public Texture2D indiKettle;
+    public Texture2D indiCoffeeMaker;
+    public Texture2D indiMicrowave;
+    public Texture2D indiJalousie;
+    public Texture2D indiWashingMachine;
+    public Texture2D indiSpeakers;
+    public Texture2D indiTV1;
+    public Texture2D indiTV2;
+    public Texture2D indiPump;
+    public Texture2D indiSlowCooker;
+    public Texture2D indiOff;
+    public Texture2D indiOn;
+    public Texture2D indiError;
+
+    [Header("GUIInterface")]
+    public GUISkin GUIInterface;
+    public GUIStyle Styleindi;
+    public GUIStyle StyleScrollBar;
+    public GUIStyle StyleButton;
+    public GUIStyle StyleFiled;
+
+    [Header("Size Font")]
+    public byte SizeFont;
+
+    [Header("buttonPosition")]
+    public Vector2 buttonPositionEnerge;
+    public Vector2 buttonPositionLighting;
+    public Vector2 buttonPositionKettle;
+    public Vector2 buttonPositionCoffeeMaker;
+    public Vector2 buttonPositionMicrowave;
+    public Vector2 buttonPositionJalousie;
+    public Vector2 buttonPositionWashingMachine;
+    public Vector2 buttonPositionTV1;
+    public Vector2 buttonPositionTV2;
+    public Vector2 buttonPositionSpeakers;
+    public Vector2 buttonPositionSettings;
+    public Vector2 buttonPositionBack;
+    public Vector2 buttonPositionPump;
+     public Vector2 buttonPositionSlowCooker;
+
+    [Header("buttonPosition")]
+    public Vector2 ScrollbarPosition;
+
+    [Header("IndiPosition")]
+    public Vector2 IndiPositionEnerge;
+    public Vector2 IndiPositionLighting;
+    public Vector2 IndiPositionKettle;
+    public Vector2 IndiPositionCoffeeMaker;
+    public Vector2 IndiPositionMicrowave;
+    public Vector2 IndiPositionJalousie;
+    public Vector2 IndiPositionWashingMachine;
+    public Vector2 IndiPositionTV1;
+    public Vector2 IndiPositionTV2;
+    public Vector2 IndiPositionSpeakers;
+    public Vector2 IndiPositionPump;
+    public Vector2 IndiPositionSlowCooker;
+    public bool energe;
+    public byte ProgramState;
+
+    public bool cEnerge;
+    private bool cLighting;
+    private bool cKettle;
+    private bool cCoffeeMaker;
+    private bool cMicrowave;
+    private bool cJalousie;
+    private bool cSettings;
+    private bool cWashingMachine;
+    private bool cTV1;
+    private bool cTV2;
+    private bool cSpeakers;
+    private bool cPump;
+    private bool cSlowCooker;
+
+    public float GlobalTimer;
+    [Header("Scrollbar")]
+    public float vScrollbar;
+
+    [Header("Client")]
+    public string IP;
+    public int port;
+    private Socket ServerSocket;
+
+    #endregion
+    // Use this for initialization
+    void Start()
+    {      
+        cEnerge = true;
+        IP = "192.168.1.2";
+        port = 20705;
+    }
+    // Update is called once per frame
+    void Update()
+    {
+     //  GlobalTimer += Time.deltaTime;
+    }
+    void OnGUI()
+    {
+        GUI.skin.label.fontSize = SizeFont;
+        GUI.skin.button.fontSize = SizeFont;
+        GUI.DrawTexture(new Rect(0, 0, Screen.width, Screen.height), background);
+        vScrollbar = GUI.VerticalScrollbar(new Rect(Screen.width / ScrollbarPosition.x, Screen.height / ScrollbarPosition.y, 500, Screen.height - 40), vScrollbar, 50, 20, Screen.height);
+
+        if (ProgramState == 0)
+        {
+            Indickated();
+            buttonEnerge();
+            buttonLighting();
+            buttonKettle();
+            buttonCoffeeMaker();
+            buttonMicrowave();
+            buttonJalousie();
+            buttonSettings();
+            buttonTV1();
+            buttonTV2();
+            buttonSpeakers();
+            buttonSlowCooker();
+            buttonPump();
+            buttonWashingMachine();
+        }
+        else
+            if (ProgramState == 1)
+            {
+                buttonBack();
+                vScrollbar = 0;
+                EnterIP();
+            }
+    }
+
+    public void EnterIP()
+    {
+        IP = GUI.TextField(new Rect(0, 0, Screen.width / 2, Screen.height / 10), IP);
+        GUI.Label(new Rect(0, Screen.height / 10, Screen.width, Screen.height / 10), IP);
+    }
+
+    public void Indickated()
+    {
+        GUI.DrawTexture(new Rect(Screen.width / IndiPositionEnerge.x, Screen.height / IndiPositionEnerge.y - vScrollbar, Screen.height / 15, Screen.height / 10), indiEnerge);
+        GUI.DrawTexture(new Rect(Screen.width / IndiPositionLighting.x, Screen.height / IndiPositionLighting.y - vScrollbar, Screen.height / 15, Screen.height / 10), indiLighting);
+        GUI.DrawTexture(new Rect(Screen.width / IndiPositionKettle.x, Screen.height / IndiPositionKettle.y - vScrollbar, Screen.height / 15, Screen.height / 10), indiKettle);
+        GUI.DrawTexture(new Rect(Screen.width / IndiPositionCoffeeMaker.x, Screen.height / IndiPositionCoffeeMaker.y - vScrollbar, Screen.height / 15, Screen.height / 10), indiCoffeeMaker);
+        GUI.DrawTexture(new Rect(Screen.width / IndiPositionMicrowave.x, Screen.height / IndiPositionMicrowave.y - vScrollbar, Screen.height / 15, Screen.height / 10), indiMicrowave);
+        GUI.DrawTexture(new Rect(Screen.width / IndiPositionJalousie.x, Screen.height / IndiPositionJalousie.y - vScrollbar, Screen.height / 15, Screen.height / 10), indiJalousie);
+
+        GUI.DrawTexture(new Rect(Screen.width / IndiPositionTV1.x, Screen.height / IndiPositionTV1.y - vScrollbar, Screen.height / 15, Screen.height / 10), indiTV1);
+        GUI.DrawTexture(new Rect(Screen.width / IndiPositionTV2.x, Screen.height / IndiPositionTV2.y - vScrollbar, Screen.height / 15, Screen.height / 10), indiTV2);
+        GUI.DrawTexture(new Rect(Screen.width / IndiPositionWashingMachine.x, Screen.height / IndiPositionWashingMachine.y - vScrollbar, Screen.height / 15, Screen.height / 10), indiWashingMachine);
+        GUI.DrawTexture(new Rect(Screen.width / IndiPositionSpeakers.x, Screen.height / IndiPositionSpeakers.y - vScrollbar, Screen.height / 15, Screen.height / 10), indiSpeakers);
+        GUI.DrawTexture(new Rect(Screen.width / IndiPositionPump.x, Screen.height / IndiPositionPump.y - vScrollbar, Screen.height / 15, Screen.height / 10), indiPump);
+        GUI.DrawTexture(new Rect(Screen.width / IndiPositionSlowCooker.x, Screen.height / IndiPositionSlowCooker.y - vScrollbar, Screen.height / 15, Screen.height / 10), indiSlowCooker);
+    }
+
+    public void TuchScrollbar()
+    {
+    }
+
+    //Client
+    private bool SendSignal(int number)
+    {
+        IPEndPoint ipEndPoint = new IPEndPoint(IPAddress.Parse(IP), port); //Создание конечной точки
+        ServerSocket = new Socket(IPAddress.Parse(IP).AddressFamily, SocketType.Stream, ProtocolType.Tcp); //Создание сокета
+
+        ServerSocket.Connect(ipEndPoint); //Подключение к серверу
+
+        ServerSocket.Send(BitConverter.GetBytes(number)); //Отправка номера кнопки на сервер
+        byte[] bytes = new byte[1024]; //Буфер для ответа
+
+        ServerSocket.Receive(bytes); //Получение ответа (статус кнопки)
+        return BitConverter.ToBoolean(bytes, 0); //Возвращение статуса кнопки
+    }
+    //Signal - 1
+    public void buttonEnerge()
+    {
+        if (GUI.Button(new Rect((Screen.width / buttonPositionEnerge.x), Screen.height / buttonPositionEnerge.y - vScrollbar, Screen.width / 1.4F, Screen.height / 10), " Energe ", StyleButton))
+        {
+            if (SendSignal(1))
+            {
+                indiEnerge = indiOff;
+                cEnerge = false;
+
+                cLighting = false;
+                cKettle = false;
+                cCoffeeMaker = false;
+                cMicrowave = false;
+                cJalousie = false;
+                cWashingMachine = false;
+                cTV1 = false;
+                cTV2 = false;
+                cSpeakers = false;
+                cPump = false;
+                cSlowCooker = false;
+                indiLighting = indiError;
+                indiKettle = indiError;
+                indiCoffeeMaker = indiError;
+                indiMicrowave = indiError;
+                indiJalousie = indiError;
+                indiPump = indiError;
+                indiSlowCooker = indiError;
+                indiSpeakers = indiError;
+                indiTV1 = indiError;
+                indiTV2 = indiError;
+                indiWashingMachine = indiError;
+                Indickated();
+            }
+            else
+            {
+                indiEnerge = indiOn;
+                cEnerge = true;
+                indiLighting = indiOff;
+                indiKettle = indiOff;
+                indiCoffeeMaker = indiOff;
+                indiMicrowave = indiOff;
+                indiJalousie = indiOff;
+                indiPump = indiOff;
+                indiSlowCooker = indiOff;
+                indiSpeakers = indiOff;
+                indiTV1 = indiOff;
+                indiTV2 = indiOff;
+                indiWashingMachine = indiOff;
+                Indickated();
+            }
+         
+        }
+
+    }
+    //Signal - 2
+    public void buttonLighting()
+    {
+        if (GUI.Button(new Rect((Screen.width / buttonPositionLighting.x), Screen.height / buttonPositionLighting.y - vScrollbar, Screen.width / 1.4F, Screen.height / 10), "Lighting", StyleButton))
+        {
+            if (cEnerge)
+            {
+                bool status = SendSignal(2);
+                indiLighting = (status) ? indiOn : indiOff;
+                cLighting = status;
+            }
+            else
+                indiLighting = indiError;
+        }
+
+    }
+    //Signal - 3
+    public void buttonKettle()
+    {
+        if (GUI.Button(new Rect((Screen.width / buttonPositionKettle.x), Screen.height / buttonPositionKettle.y - vScrollbar, Screen.width / 1.4F, Screen.height / 10), "Kettle", StyleButton))
+        {
+            if (cEnerge)
+            {
+                bool status = SendSignal(3);
+                indiKettle = (status) ? indiOn : indiOff;
+                cKettle = status;
+            }
+            else
+                indiKettle = indiError;
+        }
+
+    }
+    //Signal - 4
+    public void buttonCoffeeMaker()
+    {
+        if (GUI.Button(new Rect((Screen.width / buttonPositionCoffeeMaker.x), Screen.height / buttonPositionCoffeeMaker.y - vScrollbar, Screen.width / 1.4F, Screen.height / 10), "Coffee maker", StyleButton))
+        {
+            if (cEnerge)
+            {
+                bool status = SendSignal(4);
+                indiCoffeeMaker = (status) ? indiOn : indiOff;
+                cCoffeeMaker = status;
+            }
+            else
+                indiCoffeeMaker = indiError;
+        }
+
+    }
+    //Signal - 5
+    public void buttonMicrowave()
+    {
+        if (GUI.Button(new Rect((Screen.width / buttonPositionMicrowave.x), Screen.height / buttonPositionMicrowave.y - vScrollbar, Screen.width / 1.4F, Screen.height / 10), "Microwave", StyleButton))
+        {
+            if (cEnerge)
+            {
+                bool status = SendSignal(5);
+                indiMicrowave = (status) ? indiOn : indiOff;
+                cMicrowave = status;
+            }
+            else
+                indiMicrowave = indiError;
+        }
+
+    }
+    //Signal - 6
+    public void buttonJalousie()
+    {
+        if (GUI.Button(new Rect((Screen.width / buttonPositionJalousie.x), Screen.height / buttonPositionJalousie.y - vScrollbar, Screen.width / 1.4F, Screen.height / 10), "Jalousie", StyleButton))
+        {
+            if (cEnerge)
+            {
+                bool status = SendSignal(6);
+                indiJalousie = (status) ? indiOn : indiOff;
+                cJalousie = status;
+            }
+            else
+                indiJalousie = indiError;
+        }
+
+    }
+    //Signal - 7
+    public void buttonTV1()
+    {
+        if (GUI.Button(new Rect((Screen.width / buttonPositionTV1.x), Screen.height / buttonPositionTV1.y - vScrollbar, Screen.width / 1.4F, Screen.height / 10), "TV1", StyleButton))
+        {
+            if (cEnerge)
+            {
+                bool status = SendSignal(7);
+                indiTV1 = (status) ? indiOn : indiOff;
+                cTV1 = status;
+            }
+            else
+                indiTV1 = indiError;
+        }
+    }
+    //Signal - 8
+    public void buttonTV2()
+    {
+        if (GUI.Button(new Rect((Screen.width / buttonPositionTV2.x), Screen.height / buttonPositionTV2.y - vScrollbar, Screen.width / 1.4F, Screen.height / 10), "TV2", StyleButton))
+        {
+            if (cEnerge)
+            {
+                bool status = SendSignal(8);
+                indiTV2 = (status) ? indiOn : indiOff;
+                cTV2 = status;
+            }
+            else
+                indiTV2 = indiError;
+        }
+    }
+    //Signal - 9
+    public void buttonWashingMachine()
+    {
+        if (GUI.Button(new Rect((Screen.width / buttonPositionWashingMachine.x), Screen.height / buttonPositionWashingMachine.y - vScrollbar, Screen.width / 1.4F, Screen.height / 10), "Washing machine", StyleButton))
+        {
+            if (cEnerge)
+            {
+                bool status = SendSignal(9);
+                indiWashingMachine = (status) ? indiOn : indiOff;
+                cWashingMachine = status;
+            }
+            else
+                indiWashingMachine = indiError;
+        }
+    }
+    //Signal - 10
+    public void buttonSpeakers()
+    {
+        if (GUI.Button(new Rect((Screen.width / buttonPositionSpeakers.x), Screen.height / buttonPositionSpeakers.y - vScrollbar, Screen.width / 1.4F, Screen.height / 10), "Speakers", StyleButton))
+        {
+            if (cEnerge)
+            {
+                bool status = SendSignal(10);
+                indiSpeakers = (status) ? indiOn : indiOff;
+                cSpeakers = status;
+            }
+            else
+                indiSpeakers = indiError;
+        }
+    }
+    //Signal - 11
+    public void buttonPump()
+    {
+        if (GUI.Button(new Rect((Screen.width / buttonPositionPump.x), Screen.height / buttonPositionPump.y - vScrollbar, Screen.width / 1.4F, Screen.height / 10), "Pump", StyleButton))
+        {
+            if (cEnerge)
+            {
+                bool status = SendSignal(11);
+                indiPump = (status) ? indiOn : indiOff;
+                cPump = status;
+            }
+            else
+                indiPump = indiError;
+        }
+    }
+    //Signal - 12
+    public void buttonSlowCooker()
+    {
+        if (GUI.Button(new Rect((Screen.width / buttonPositionSlowCooker.x), Screen.height / buttonPositionSlowCooker.y - vScrollbar, Screen.width / 1.4F, Screen.height / 10), "Slow cooker", StyleButton))
+        {
+            if (cEnerge)
+            {
+                bool status = SendSignal(12);
+                indiSlowCooker = (status) ? indiOn : indiOff;
+                cSlowCooker = status;
+            }
+            else
+                indiSlowCooker = indiError;
+        }
+    }
+
+    public void buttonSettings()
+    {
+        if (GUI.Button(new Rect((Screen.width / buttonPositionSettings.x), Screen.height / buttonPositionSettings.y - vScrollbar, Screen.width / 1.4F, Screen.height / 10), "Settings", StyleButton))
+        {
+            ProgramState = 1;
+        }
+
+    }
+
+    public void buttonBack()
+    {
+        if (GUI.Button(new Rect((Screen.width / buttonPositionBack.x), Screen.height / buttonPositionBack.y - vScrollbar, Screen.width / 1.4F, Screen.height / 10), "Back", StyleButton))
+        {
+            ProgramState = 0;
+        }
+
+    }
+}
