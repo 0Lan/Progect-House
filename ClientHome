@@ -1,0 +1,94 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Net;
+using System.Net.Sockets;
+
+namespace Client_Home_
+{
+    class Program
+    {
+        public struct Electronic
+        {
+            public string title;
+            public bool status;
+            public Electronic(string title, bool status)
+            {
+                this.title = title;
+                this.status = status;
+            }
+        }
+        static void SendMessageFromSocket()
+        {
+            Dictionary<int, Electronic> Electronics = new Dictionary<int, Electronic>();
+            Electronics.Add(1, new Electronic("Energe", false));
+            Electronics.Add(2, new Electronic("Lighting", false));
+            Electronics.Add(3, new Electronic("Kettle", false));
+            Electronics.Add(4, new Electronic("CoffeeMaker", false));
+            Electronics.Add(5, new Electronic("Microwave", false));
+            Electronics.Add(6, new Electronic("Jalousie", false));
+            Electronics.Add(7, new Electronic("TV1", false));
+            Electronics.Add(8, new Electronic("TV2", false));
+            Electronics.Add(9, new Electronic("WashingMachine", false));
+            Electronics.Add(10, new Electronic("Speakers", false));
+            Electronics.Add(11, new Electronic("Pump", false));
+            Electronics.Add(12, new Electronic("SlowCooker", false)); 
+
+            IPAddress IP = IPAddress.Parse("192.168.1.2");
+            IPEndPoint ipEndPoint = new IPEndPoint(IP, 20705);
+
+            Socket sender = new Socket(IP.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+
+            sender.Connect(ipEndPoint);
+            Console.WriteLine("Smart House Log: ");
+            int data;
+            byte[] bytes = new byte[1024];
+            int countRequest = 1;
+
+            while (true)
+            {
+                sender.Receive(bytes);
+                data = BitConverter.ToInt32(bytes, 0);
+
+                Electronic newEl = Electronics[data];
+                if (Electronics[data].status)
+                    newEl.status = false;
+                else
+                    newEl.status = true;
+                Electronics[data] = newEl;
+
+                if (Electronics[data].title == "Energe")
+                    for (int i = 2; i < Electronics.Count; i++)
+                    {
+                        Electronic tempEl = Electronics[i];
+                        tempEl.status = false;
+                        Electronics[i] = tempEl;
+                    }
+
+                if (Electronics[data].title != "Energe")
+                    Console.WriteLine("Request " + countRequest + ": " + Electronics[data].title + " " +
+                ((Electronics[data].status) ? "On" : "Off"));
+                else
+                    Console.WriteLine("Request " + countRequest + ": " + Electronics[data].title + " " +
+                ((Electronics[data].status) ? "Off" : "On"));
+
+                sender.Send(BitConverter.GetBytes(Electronics[data].status));
+                countRequest++;
+            }
+        }
+        static void Main(string[] args)
+        {
+            try
+            {
+                SendMessageFromSocket();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+                Console.ReadLine();
+            }
+        }
+    }
+}
