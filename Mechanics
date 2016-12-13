@@ -1,0 +1,452 @@
+using UnityEngine;
+using System.Collections;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Net;
+using System.Net.Sockets;
+using System.Threading;
+
+public class Mechanic : MonoBehaviour {
+
+    #region
+    #region LightStage1
+    [Header("Light1")]
+    public  bool stage1;
+    public GameObject stage1li1;
+    public GameObject stage1li2;
+    public GameObject stage1li3;
+    public GameObject stage1li4;
+    public GameObject stage1li5;
+    public GameObject stage1li6;
+    #endregion LightStage1
+    #region Windows
+    public GameObject Stage1Windows1;
+    public GameObject Stage1Windows1Off;
+    public GameObject Stage1Windows2;
+    public GameObject Stage1Windows2Off;
+    public GameObject Stage1Windows3;
+    public GameObject Stage1Windows3Off;
+    #endregion Windows
+    #region LightStage2
+    [Header("Light2")]
+    public bool stage2;
+    public GameObject stage2li1;
+    public GameObject stage2li2;
+    public GameObject stage2li3;
+    public GameObject stage2li4;
+    public GameObject stage2li5;
+    public GameObject stage2li6;
+    #endregion LightStage2
+    #region Shield
+    [Header("Shield")]
+    public bool ShieldHome;
+    public bool ShieldRegion;
+    public GameObject Shield;
+    public GameObject ShieldOn;
+    public GameObject ShieldOff;
+    #endregion Shield
+    #region Mech
+    [Header("Machanics")]
+    public bool St1Obj1;
+    public GameObject St1Obj1On;
+    public GameObject St1Obj1Off;
+    public bool St1Obj2;
+    public GameObject St1Obj2On;
+    public GameObject St1Obj2Off;
+    public bool St1Obj3;
+    public GameObject St1Obj3On;
+    public GameObject St1Obj3Off;
+    public bool St1Obj4;
+    public GameObject St1Obj4On;
+    public GameObject St1Obj4Off;
+    public bool St1Obj5;
+    public GameObject St1Obj5On;
+    public GameObject St1Obj5Off;
+    public bool St1Obj6;
+    public GameObject St1Obj6On;
+    public GameObject St1Obj6Off;
+    public bool St1Obj7;
+    public GameObject St1Obj7On;
+    public GameObject St1Obj7Off;
+    public bool St1Obj8;
+    public GameObject St1Obj8On;
+    public GameObject St1Obj8Off;
+    public bool St1Obj9;
+    public GameObject St1Obj9On;
+    public GameObject St1Obj9Off;
+    public bool St1Obj10;
+    public GameObject St1Obj10On;
+    public GameObject St1Obj10Off;
+    public bool St1Obj11;
+    public GameObject St1Obj11On;
+    public GameObject St1Obj11Off;
+    #endregion Mech
+    static Dictionary<int, Electronic> Electronics = new Dictionary<int, Electronic>();
+    static IPAddress IP;
+    static IPEndPoint ipEndPoint;
+    static Socket sender;
+    #endregion
+    void Start()
+    {
+
+        StartStatus();
+        Electronics.Add(1, new Electronic("Energe", false));
+        Electronics.Add(2, new Electronic("Lighting", false));
+        Electronics.Add(3, new Electronic("Kettle", false));
+        Electronics.Add(4, new Electronic("CoffeeMaker", false));
+        Electronics.Add(5, new Electronic("Microwave", false));
+        Electronics.Add(6, new Electronic("Jalousie", false));
+        Electronics.Add(7, new Electronic("TV1", false));
+        Electronics.Add(8, new Electronic("TV2", false));
+        Electronics.Add(9, new Electronic("WashingMachine", false));
+        Electronics.Add(10, new Electronic("Speakers", false));
+        Electronics.Add(11, new Electronic("Pump", false));
+        Electronics.Add(12, new Electronic("SlowCooker", false));
+
+        IP = IPAddress.Parse("192.168.43.70");
+        ipEndPoint = new IPEndPoint(IP, 20705);
+
+        sender = new Socket(IP.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+        sender.Connect(ipEndPoint);
+        try
+        {
+            Thread one = new Thread(delegate ()
+            {
+                Debug.Log("Smart House Log: ");
+                int data;
+                byte[] bytes = new byte[1024];
+                int countRequest = 1;
+
+                if (true)
+                {
+                    sender.Receive(bytes);
+                    data = BitConverter.ToInt32(bytes, 0);
+
+                    Electronic newEl = Electronics[data];
+                    if (Electronics[data].status)
+                        newEl.status = false;
+                    else
+                        newEl.status = true;
+                    Electronics[data] = newEl;
+
+                    if (Electronics[data].title == "Energe")
+                        for (int i = 2; i < Electronics.Count; i++)
+                        {
+                            Electronic tempEl = Electronics[i];
+                            tempEl.status = false;
+                            Electronics[i] = tempEl;
+                        }
+
+                    if (Electronics[data].title != "Energe")
+                        Debug.Log("Request " + countRequest + ": " + Electronics[data].title + " " +
+                    ((Electronics[data].status) ? "On" : "Off"));
+                    else
+                        Debug.Log("Request " + countRequest + ": " + Electronics[data].title + " " +
+                    ((Electronics[data].status) ? "Off" : "On"));
+
+                    sender.Send(BitConverter.GetBytes(Electronics[data].status));
+                    countRequest++;
+                }
+            });
+            one.IsBackground = true;
+            one.Start();
+        }
+        catch (Exception ex)
+        {
+            Debug.Log(ex.ToString());
+
+        }
+    }
+    void Update()
+    {
+        Status();
+
+    }
+    public void StartStatus()
+    {
+        ShieldHome = Electronics[1].status;
+        St1Obj1 = Electronics[2].status;
+        St1Obj1 = Electronics[3].status;
+        St1Obj1 = Electronics[4].status;
+        St1Obj1 = Electronics[5].status;
+        St1Obj1 = Electronics[6].status;
+        St1Obj1 = Electronics[7].status;
+        St1Obj1 = Electronics[8].status;
+        St1Obj1 = Electronics[9].status;
+        St1Obj1 = Electronics[10].status;
+        St1Obj1 = Electronics[11].status;
+        stage1 = false;
+        stage2 = false;
+    }
+    public void Status()
+    {
+       
+        ConnectShield();
+        if (ShieldHome == true)
+        {
+            Stage1LightHome();
+            Stage1WindowsHome();
+            Stage1Obj1();
+            Stage1Obj2();
+            Stage1Obj3();
+            Stage1Obj4();
+            Stage1Obj5();
+            Stage1Obj6();
+            Stage1Obj7();
+            Stage1Obj8();
+            Stage1Obj9();
+        }
+    }
+    public void ConnectShield()
+    {
+        
+        if (Input.GetKeyDown(KeyCode.Q))
+        {
+
+            if (ShieldHome == false)
+            {
+                ShieldHome = true;
+                stage1 = true;
+                
+                ShieldOn.SetActive(!ShieldOn.activeSelf);
+                ShieldOff.SetActive(!ShieldOff.activeSelf);
+            }
+        }
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+
+            if (ShieldHome == true)
+            {
+
+                ShieldHome = false;
+                stage1 = false;
+        
+                ShieldOn.SetActive(!ShieldOn.activeSelf);
+                ShieldOff.SetActive(!ShieldOff.activeSelf);
+                OffState();
+
+            }
+        }
+    }
+    public void Stage1LightHome()
+    {
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            if (stage1 == true)
+            {
+                
+                stage1li1.SetActive(!stage1li1.activeSelf);
+                stage1li2.SetActive(!stage1li2.activeSelf);
+                stage1li3.SetActive(!stage1li3.activeSelf);
+                stage1li4.SetActive(!stage1li4.activeSelf);
+                stage1li5.SetActive(!stage1li5.activeSelf);
+                stage1li6.SetActive(!stage1li6.activeSelf);
+              
+            }
+
+        }
+    }
+    public void OffState()
+    {
+
+        stage1li1.SetActive(false);
+        stage1li2.SetActive(false);
+        stage1li3.SetActive(false);
+        stage1li4.SetActive(false);
+        stage1li5.SetActive(false);
+        stage1li6.SetActive(false);
+        //################################
+        St1Obj1On.SetActive(false);
+        St1Obj1Off.SetActive(true);
+        //################################
+        St1Obj2On.SetActive(false);
+        St1Obj2Off.SetActive(true);
+
+        St1Obj3On.SetActive(false);
+        St1Obj3Off.SetActive(true);
+
+        St1Obj4On.SetActive(false);
+        St1Obj4Off.SetActive(true);
+
+        St1Obj5On.SetActive(false);
+        St1Obj5Off.SetActive(true);
+
+        St1Obj6On.SetActive(false);
+        St1Obj6Off.SetActive(true);
+        St1Obj7On.SetActive(false);
+        St1Obj7Off.SetActive(true);
+        St1Obj8On.SetActive(false);
+        St1Obj8Off.SetActive(true);
+        St1Obj9On.SetActive(false);
+        St1Obj9Off.SetActive(true);
+        St1Obj10On.SetActive(false);
+        St1Obj10Off.SetActive(true);
+        St1Obj11On.SetActive(false);
+        St1Obj11Off.SetActive(true);
+
+    }
+    public void Stage1WindowsHome()
+    {
+        if (Input.GetKeyDown(KeyCode.T))
+        {
+            if (stage1 == true)
+            {
+
+                Stage1Windows1.SetActive(!Stage1Windows1.activeSelf);
+             
+                Stage1Windows1Off.SetActive(!Stage1Windows1Off.activeSelf);
+                Stage1Windows2.SetActive(!Stage1Windows2.activeSelf);
+          
+                Stage1Windows2Off.SetActive(!Stage1Windows2Off.activeSelf);
+                Stage1Windows3.SetActive(!Stage1Windows3.activeSelf);
+               
+                Stage1Windows3Off.SetActive(!Stage1Windows3Off.activeSelf);
+
+
+            }
+
+        }
+    }
+    public void Stage1Obj1()
+    {
+        //################################
+        if (Input.GetKeyDown(KeyCode.Y))
+        {
+            if (stage1 == true)
+            {
+                St1Obj1On.SetActive(!St1Obj1On.activeSelf);
+                St1Obj1Off.SetActive(!St1Obj1Off.activeSelf);     
+            }
+
+        }
+        //################################
+    }
+    public void Stage1Obj2()
+    {
+        //################################
+        if (Input.GetKeyDown(KeyCode.U))
+        {
+            if (stage1 == true)
+            {
+                St1Obj2On.SetActive(!St1Obj2On.activeSelf);
+                St1Obj2Off.SetActive(!St1Obj2Off.activeSelf);
+            }
+
+        }
+        //################################
+    }
+    public void Stage1Obj3()
+    {
+        //################################
+        if (Input.GetKeyDown(KeyCode.I))
+        {
+            if (stage1 == true)
+            {
+                St1Obj3On.SetActive(!St1Obj3On.activeSelf);
+                St1Obj3Off.SetActive(!St1Obj3Off.activeSelf);
+            }
+
+        }
+        //################################
+    }
+    public void Stage1Obj4()
+    {
+        //################################
+        if (Input.GetKeyDown(KeyCode.O))
+        {
+            if (stage1 == true)
+            {
+                St1Obj4On.SetActive(!St1Obj4On.activeSelf);
+                St1Obj4Off.SetActive(!St1Obj4Off.activeSelf);
+                St1Obj5On.SetActive(!St1Obj5On.activeSelf);
+                St1Obj5Off.SetActive(!St1Obj5Off.activeSelf);
+                St1Obj6On.SetActive(!St1Obj6On.activeSelf);
+                St1Obj6Off.SetActive(!St1Obj6Off.activeSelf);
+            }
+
+        }
+        //################################
+    }
+    public void Stage1Obj5()
+    {
+        //################################
+        if (Input.GetKeyDown(KeyCode.P))
+        {
+            if (stage1 == true)
+            {
+                St1Obj7On.SetActive(!St1Obj7On.activeSelf);
+                St1Obj7Off.SetActive(!St1Obj7Off.activeSelf);
+            }
+
+        }
+        //################################
+    }
+    public void Stage1Obj6()
+    {
+        //################################
+        if (Input.GetKeyDown(KeyCode.F))
+        {
+            if (stage1 == true)
+            {
+                St1Obj8On.SetActive(!St1Obj8On.activeSelf);
+                St1Obj8Off.SetActive(!St1Obj8Off.activeSelf);
+            }
+
+        }
+        //################################
+    }
+    public void Stage1Obj7()
+    {
+        //################################
+        if (Input.GetKeyDown(KeyCode.G))
+        {
+            if (stage1 == true)
+            {
+                St1Obj9On.SetActive(!St1Obj9On.activeSelf);
+                St1Obj9Off.SetActive(!St1Obj9Off.activeSelf);
+            }
+
+        }
+        //################################
+    }
+    public void Stage1Obj8()
+    {
+        //################################
+        if (Input.GetKeyDown(KeyCode.H))
+        {
+            if (stage1 == true)
+            {
+                St1Obj10On.SetActive(!St1Obj10On.activeSelf);
+                St1Obj10Off.SetActive(!St1Obj10Off.activeSelf);
+            }
+
+        }
+        //################################
+    }
+    public void Stage1Obj9()
+    {
+        //################################
+        if (Input.GetKeyDown(KeyCode.J))
+        {
+            if (stage1 == true)
+            {
+                St1Obj11On.SetActive(!St1Obj11On.activeSelf);
+                St1Obj11Off.SetActive(!St1Obj11Off.activeSelf);
+            }
+
+        }
+        //################################
+    }
+    public struct Electronic
+    {
+        public string title;
+        public bool status;
+        public Electronic(string title, bool status)
+        {
+            this.title = title;
+            this.status = status;
+        }
+    }
+}
